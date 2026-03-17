@@ -15,27 +15,29 @@ from sklearn.metrics import confusion_matrix
 class ConvNet(nn.Module):
     def __init__(self):
         super().__init__()
+        #Convolution:
         self.conv1 = nn.Conv2d(1, 64, 3, 1, 1)
         self.conv2 = nn.Conv2d(64, 64, 3, 1, 1)
         self.conv3 = nn.Conv2d(64, 128, 3, 1, 1)
         self.conv4 = nn.Conv2d(128, 256, 3, 1, 1)
-        
+        #BatchNorm:
         self.batchnorm1 = nn.BatchNorm2d(64)
         self.batchnorm2 = nn.BatchNorm2d(64)
         self.batchnorm3 = nn.BatchNorm2d(128)
         self.batchnorm4 = nn.BatchNorm2d(256)
-        
+        #ReLu and Pool
         self.relu = nn.ReLU()
         self.pool = nn.MaxPool2d(2, 2)
-        
         self.adaptive_pool = nn.AdaptiveAvgPool2d((7, 7))
-
+        #Linear:
         self.fc1 = nn.Linear(256 * 7 * 7, 2048) 
         self.bn_fc1 = nn.BatchNorm1d(2048)
         self.fc2 = nn.Linear(2048, 512)
         self.bn_fc2 = nn.BatchNorm1d(512)
         self.fc3 = nn.Linear(512, 6) 
-        
+        #Dropout：
+        #Lower rate (0.3) after first FC layer to retain more information.
+        #Higher rate (0.5) after second FC layer to aggressively prevent overfitting
         self.dropout1 = nn.Dropout(p=0.3)
         self.dropout2 = nn.Dropout(p=0.5)
 #---------------------forward--------------------------
@@ -150,8 +152,10 @@ if __name__ == '__main__':
 
 
     model = ConvNet().to(device)
+    #Label Smoothing (0.1) helps the model generalize better on noisy datasets like FER-2013
     criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
     optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
+    #Cosine Annealing scheduler helps find the optimal minimum in later epochs
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=60, eta_min=1e-6)
     train_model(model, train_loader, val_loader, 60, scheduler, optimizer, criterion, gpu_aug, device)
 
